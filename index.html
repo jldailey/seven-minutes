@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>7-minute workout</title>
+		<script src="js/min.bling.js"></script>
+		<script src="js/coffee-script.js"></script>
+		<style type="text/css">
+			#clock {
+				font-size: x-large;
+				font-weight: bold;
+			}
+			#current {
+				background-image: url(exercises.jpg);
+				width: 125px;
+				height: 180px;
+				margin-left: auto;
+				margin-right: auto;
+				border: 1px solid black;
+			}
+			.resting { background-image: none; }
+			.jumping-jacks { background-position: -7px 0px; }
+			.wall-sit { background-position: -160px 0px; }
+			.push-up { background-position: -310px 0px; }
+			.ab-crunch { background-position: -465px 0px; }
+			.chair-step { background-position: -7px -170px; }
+			.squat { background-position: -160px -170px; }
+			.chair-dip { background-position: -310px -170px; }
+			.plank { background-position: -465px -170px; }
+			.high-knees { background-position: -7px -360px; }
+			.lunge { background-position: -160px -360px; }
+			.push-up-rot { background-position: -310px -360px; }
+			.side-plank { background-position: -465px -360px; }
+		</style>
+		<script type="text/coffeescript">
+			exercises = [
+				"jumping-jacks",
+				"wall-sit",
+				"push-up",
+				"ab-crunch",
+				"chair-step",
+				"squat",
+				"chair-dip",
+				"plank",
+				"high-knees",
+				"lunge",
+				"push-up-rot",
+				"side-plank"
+			]
+			current = 0
+			nextExercise = ->
+				current = Math.min current + 1, exercises.length - 1
+				$("#current").zap('className', exercises[current])
+			prevExercise = ->
+				current = Math.max current - 1, 0
+				$("#current").zap('className', exercises[current])
+
+			timeScale = 4.0
+			class Countdown extends $.EventEmitter
+				constructor: (@max, selector) ->
+					super @
+					@node = $ selector
+					@interval = $.interval 1000/timeScale, @tick.bind @
+					@reset()
+				draw: -> @node.text "00:#{$.padLeft String(@cur), 2, "0"}"; @
+				reset: ->
+					@cur = @max
+					@interval.pause()
+				pause: -> @interval.pause(); @
+				resume: ->
+					@interval.resume()
+					return @
+				tick: ->
+					@cur -= 1
+					if @cur <= 0
+						@cur = @max
+						@emit 'done'
+					@draw()
+
+			workTimer = new Countdown(30, "#clock").draw().on 'done', ->
+				nextExercise()
+				workTimer.pause()
+
+			flash = (msg) ->
+				$("#clock").text(msg)
+
+			Keys =
+				32: "space"
+				37: "left"
+				39: "right"
+			$(document).bind 'keyup', (evt) ->
+				switch Keys[evt.keyCode]
+					when "left"
+						prevExercise()
+						workTimer.reset()
+						workTimer.draw()
+					when "space"
+						flash("GO!")
+						workTimer.resume()
+					else $.log "Ignoring key:", evt.keyCode, Keys[evt.keyCode]
+		</script>
+	</head>
+	<body>
+		<center class="instructions">
+			Press spacebar to start the clock.<br>
+			Press the Left arrow to go back one.<br>
+		</center>
+		<div id="current" class="jumping-jacks"></div>
+		<center id="clock"></center>
+	</body>
+</html>
+
